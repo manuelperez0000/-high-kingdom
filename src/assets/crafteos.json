@@ -1,0 +1,130 @@
+{
+  "recetas_base": {
+    "hilo": {
+      "algodon": 1
+    },
+    "palo": {
+      "madera": 1
+    },
+    "runa": {
+      "piedra": 10
+    }
+  },
+  "objetos": {
+    "flecha_de_madera": {
+      "palo": 1,
+      "hilo": 1,
+      "madera": 1
+    },
+    "flecha_de_piedra": {
+      "palo": 1,
+      "hilo": 1,
+      "piedra": 1
+    },
+    "flecha_de_hierro": {
+      "palo": 1,
+      "hilo": 1,
+      "hierro": 1
+    },
+
+    "hacha_de_madera": {
+      "madera": 1,
+      "hilo": 1,
+      "palo": 1
+    },
+    "hacha_de_piedra": {
+      "piedra": 1,
+      "hilo": 1,
+      "palo": 1
+    },
+    "hacha_de_hierro": {
+      "hierro": 1,
+      "hilo": 1,
+      "palo": 1
+    },
+
+    "arco_de_madera": {
+      "palo": 2,
+      "hilo": 2
+    },
+    "arco_de_hierro": {
+      "palo": 2,
+      "hilo": 2,
+      "hierro": 1
+    },
+
+    "martillo_de_madera": {
+      "madera": 1,
+      "hilo": 1,
+      "palo": 1
+    },
+    "martillo_de_piedra": {
+      "piedra": 1,
+      "hilo": 1,
+      "palo": 1
+    },
+    "martillo_de_hierro": {
+      "hierro": 1,
+      "hilo": 1,
+      "palo": 1
+    },
+
+    "pico_de_madera": {
+      "madera": 1,
+      "hilo": 1,
+      "palo": 1
+    },
+    "pico_de_piedra": {
+      "piedra": 1,
+      "hilo": 1,
+      "palo": 1
+    },
+    "pico_de_hierro": {
+      "hierro": 1,
+      "hilo": 1,
+      "palo": 1
+    },
+
+    "asada_de_madera": {
+      "madera": 1,
+      "hilo": 1,
+      "palo": 1
+    },
+    "asada_de_piedra": {
+      "piedra": 1,
+      "hilo": 1,
+      "palo": 1
+    },
+    "asada_de_hierro": {
+      "hierro": 1,
+      "hilo": 1,
+      "palo": 1
+    },
+
+    "grimorio": {
+      "runa": 3,
+      "madera": 1,
+      "hilo": 3
+    },
+
+    "ariete_de_madera": {
+      "madera": 2,
+      "hilo": 2,
+      "palo": 2
+    },
+    "ariete_de_piedra": {
+      "piedra": 2,
+      "hilo": 2,
+      "palo": 2
+    },
+    "ariete_de_hierro": {
+      "hierro": 2,
+      "hilo": 2,
+      "palo": 2
+    },
+
+    "muro_de_piedra": {
+      "piedra": 4
+    }
+  }
+}
