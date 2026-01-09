@@ -49,7 +49,7 @@ const Terrain = () => {
     showCharacterModal,
     setShowCharacterModal,
     showCraftModal,
-    setShowCraftModal,
+    /* setShowCraftModal, */
     boardState,
     playerInventory,
     backpack,
@@ -73,6 +73,25 @@ const Terrain = () => {
     selectedBackpackItem,
     crafteos    
   } = useTerrain();
+
+  const isObreroNearby = (i) => {
+    const row = Math.floor(i / 18);
+    const col = i % 18;
+    const directions = [
+      [-1, -1], [-1, 0], [-1, 1],
+      [0, -1],           [0, 1],
+      [1, -1],  [1, 0], [1, 1]
+    ];
+    for (let [dr, dc] of directions) {
+      const nr = row + dr;
+      const nc = col + dc;
+      if (nr >= 0 && nr < 12 && nc >= 0 && nc < 18) {
+        const ni = nr * 18 + nc;
+        if (boardState[ni] === 'obrero') return true;
+      }
+    }
+    return false;
+  };
 
   return (
     <div className="game">

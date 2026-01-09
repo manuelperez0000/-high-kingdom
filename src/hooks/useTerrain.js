@@ -6,13 +6,13 @@ export const useTerrain = () => {
   const [showModal, setShowModal] = useState(false);
   const [showMaterialModal, setShowMaterialModal] = useState(false);
   const [showCharacterModal, setShowCharacterModal] = useState(false);
+  const [showCraftModal, setShowCraftModal] = useState(false);
   const [selectedCell, setSelectedCell] = useState(null);
   const [selectedCharacter, setSelectedCharacter] = useState(null);
   const [hoveredCell, setHoveredCell] = useState(null);
   const [movingCharacter, setMovingCharacter] = useState(null);
   const [movingFrom, setMovingFrom] = useState(null);
   const [selectedWorker, setSelectedWorker] = useState(null);
-  const [showCraftModal, setShowCraftModal] = useState(false);
   const [selectedBackpackItem, setSelectedBackpackItem] = useState(null);
   const [boardState, setBoardState] = useState(terrain1.boardState);
 

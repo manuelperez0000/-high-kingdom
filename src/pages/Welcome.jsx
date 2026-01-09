@@ -1,12 +1,22 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { auth, googleProvider } from '../firebase';
+import { signInWithPopup } from 'firebase/auth';
 
 const Welcome = () => {
+
   const navigate = useNavigate();
 
-  const handleRegister = () => {
-    // Placeholder para lógica de registro con Google
-    navigate('/lobby');
+
+
+  const handleRegister = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      console.log('✅ Usuario autenticado con Google:', user.email);
+      navigate('/lobby');
+    } catch (error) {
+      console.log('❌ Error al autenticar con Google:', error);
+    }
   };
 
   return (
