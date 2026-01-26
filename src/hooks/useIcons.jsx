@@ -1,8 +1,9 @@
 import { GiWoodStick, GiStoneBlock, GiMetalBar, GiCottonFlower, GiArrowDunk, GiAxeInStump, GiCrossbow, GiHammerBreak, GiPickOfDestiny, GiSewingNeedle, GiSpellBook, GiRam, GiStoneWall } from 'react-icons/gi';
+import { useMemo } from 'react';
 
 const useIcons = () => {
 
-    const iconMap = {
+    const iconMap = useMemo(() => ({
         algodon: GiCottonFlower,
         madera: GiWoodStick,
         piedra: GiStoneBlock,
@@ -32,7 +33,7 @@ const useIcons = () => {
         ariete_de_piedra: GiRam,
         ariete_de_hierro: GiRam,
         muro_de_piedra: GiStoneWall,
-    };
+    }), []);
 
     return { iconMap };
 

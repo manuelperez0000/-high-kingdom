@@ -1,38 +1,42 @@
-import { useState, createElement } from "react"
+import { createElement } from "react"
 import useIcons from "../../hooks/useIcons"
+import useGameStore from "../../store/useGameStore"
+import CastleHealthBar from "./CastleHealthBar"
+
 const colorMap = {
     madera: 'brown',
     hierro: 'gray',
     piedra: 'lightgray',
     algodon: 'white',
-    hilo: 'white',
-    palo: 'brown',
-    runa: 'blue', // Asumiendo azul como grimorio
 };
+
 const Inventory = () => {
-
     const { iconMap } = useIcons();
+    const { inventories, playerIndex } = useGameStore();
 
-    const [playerInventory] = useState({
-        madera: 10,
-        hierro: 5,
-        piedra: 8,
-        algodon: 3,
-        hilo: 2,
-        palo: 4,
-        runa: 1,
-    });
+    // Determine which inventory to show
+    const currentPlayerKey = playerIndex === 1 ? 'player1' : 'player2';
+    const playerInventory = inventories[currentPlayerKey] || {
+        madera: 0,
+        hierro: 0,
+        piedra: 0,
+        algodon: 0
+    };
+
+    // Filter only the 4 allowed materials
+    const allowedMaterials = ['madera', 'hierro', 'piedra', 'algodon'];
 
     return (<>
-        Inventario
+        <div className="medieval-inventory-title">Inventario</div>
         <div className="inventory-compact">
-            {Object.keys(playerInventory).map(item => (
+            {allowedMaterials.map(item => (
                 <div key={item} className="inventory-compact-item">
-                    {createElement(iconMap[item], { size: 40, color: colorMap[item] || 'white' })}
-                    <span>{playerInventory[item]}</span>
+                    {iconMap[item] && createElement(iconMap[item], { size: 40, color: colorMap[item] || 'white' })}
+                    <span>{playerInventory[item] || 0}</span>
                 </div>
             ))}
         </div>
+        <CastleHealthBar />
     </>
     )
 }

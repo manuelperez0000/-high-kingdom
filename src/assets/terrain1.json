@@ -1,6 +1,6 @@
 {
   "boardState": [
-    null,
+    "castillo_jugador1",
     null,
     null,
     null,
@@ -215,6 +215,6 @@
     null,
     null,
     null,
-    null
+    "castillo_jugador2"
   ]
 }

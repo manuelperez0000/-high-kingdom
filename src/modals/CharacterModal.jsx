@@ -1,21 +1,51 @@
 /* eslint-disable react/prop-types */
-import React from 'react';
+import spriteController from '../sprites/spriteController';
+import gameConfig from '../store/config.json';
 
-const CharacterModal = ({ isOpen, onClose, iconMap, handleInvokeCharacter }) => {
+const CharacterModal = ({ isOpen, onClose, handleInvokeCharacter, playerIndex }) => {
   if (!isOpen) return null;
 
+  const characters = [
+    { id: 'obrero', name: 'Obrero', cost: gameConfig.summonCosts.obrero },
+    { id: 'arquero', name: 'Arquero', cost: gameConfig.summonCosts.arquero },
+    { id: 'mago', name: 'Mago', cost: gameConfig.summonCosts.mago }
+  ];
+
   return (
-    <div className="modal-bg">
-      <div className="modal-body p-4 material-modal">
-        <span className="close" onClick={onClose}>&times;</span>
-        <h3>Seleccionar Personaje</h3>
-        <div className="material-buttons">
-          {['arquero', 'obrero', 'mago'].map(character => (
-            <button key={character} onClick={() => handleInvokeCharacter(character)}>
-              {React.createElement(iconMap[character], { size: 30 })}
-              {character}
-            </button>
-          ))}
+    <div className="modal-bg medieval-modal-bg">
+      <div className="medieval-modal">
+        <div className="medieval-header">
+          <span className="medieval-close" onClick={onClose}>&times;</span>
+          <h3 className="medieval-title">Reclutar Tropas</h3>
+        </div>
+        
+        <div className="medieval-body">
+          <div className="character-grid">
+            {characters.map(char => {
+              const spriteKey = playerIndex === 2 ? `${char.id}2` : char.id;
+              return (
+                <div key={char.id} className="character-card" onClick={() => handleInvokeCharacter(char.id)}>
+                  <div className="character-image-container">
+                    <img src={spriteController[spriteKey]} alt={char.name} className="character-portrait" />
+                  </div>
+                  <div className="character-info">
+                    <span className="character-name">{char.name.toUpperCase()}</span>
+                    <div className="character-cost">
+                      {Object.entries(char.cost).map(([resource, amount]) => (
+                        <span key={resource} className={`cost-item ${resource}`}>
+                          {amount} {resource}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        
+        <div className="medieval-footer">
+          <p>Elige sabiamente, cada guerrero cuenta en la batalla.</p>
         </div>
       </div>
     </div>

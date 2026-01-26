@@ -1,0 +1,32 @@
+{
+  "castle": {
+    "initialHealth": 4,
+    "maxHealth":4,
+    "damageReceived": {
+      "arquero": 1,
+      "mago": 1,
+      "obrero": 3,
+      "default": 1 
+    }
+  },
+  "wall": {
+    "initialHealth": 20,
+    "damageReceived": {
+      "arquero": 3,
+      "mago": 4,
+      "obrero": 1
+    }
+  },
+  "crafting": {
+    "muro_piedra": {
+      "cost": { "madera": 0, "piedra": 1, "hierro": 0, "algodon": 0 },
+      "sprite": "piedra",
+      "name": "Muro de Piedra"
+    }
+  },
+  "summonCosts": {
+    "obrero": { "madera": 2, "piedra": 0, "hierro": 0, "algodon": 0 },
+    "arquero": { "madera": 3, "piedra": 1, "hierro": 0, "algodon": 1 },
+    "mago": { "madera": 1, "piedra": 2, "hierro": 2, "algodon": 0 }
+  }
+}

@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, addDoc, query, orderBy, doc, updateDoc, arrayUnion, onSnapshot } from 'firebase/firestore';
-
+import terrain from '../assets/terrain1.json'
+import gameConfig from '../store/config.json'
 const Lobby = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -61,8 +62,18 @@ const Lobby = () => {
         status: 'waiting',
         players: [user.uid],
         playersData: [playerData],
-        boardState: Array(12 * 18).fill(null), // Initialize empty board
-        phase: 1
+        boardState: terrain.boardState,
+        phase: 1,
+        localSelectedCharacter: null,
+        inventories: {
+          player1: { madera: 4, piedra: 0, hierro: 0, algodon: 0 },
+          player2: { madera: 4, piedra: 0, hierro: 0, algodon: 0 }
+        },
+        castleHealth: {
+          player1: gameConfig.castle.initialHealth,
+          player2: gameConfig.castle.initialHealth
+        },
+        wallHealths: {}
       };
 
       const docRef = await addDoc(collection(db, 'games'), gameData);
@@ -173,35 +184,6 @@ const Lobby = () => {
                 </div>
               )}
             </div>
-
-            {/* <div className="finished-games">
-              <h3>Partidas Finalizadas</h3>
-              {games.filter(game => game.status === 'finished').length === 0 ? (
-                <p>No hay partidas finalizadas.</p>
-              ) : (
-                <div className="games-list">
-                  {games.filter(game => game.status === 'finished').map((game) => {
-                    const creatorData = game.playersData?.find(player => player.id === game.creatorId);
-                    const winnerData = game.playersData?.find(player => player.id === game.winner);
-                    return (
-                      <div key={game.id} className="game-item">
-                        <div className="game-info">
-                          <p><strong>Creador:</strong> {creatorData?.name || 'Usuario'}</p>
-                          <p><strong>Ganador:</strong> {winnerData?.name || 'N/A'}</p>
-                          <p><strong>Estado:</strong> Finalizada</p>
-                        </div>
-                        <button
-                          className="join-game-btn"
-                          onClick={() => handleJoinGame(game.id)}
-                        >
-                          Ver resultado
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div> */}
           </div>
         </div>
       </div>
