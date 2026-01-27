@@ -57,6 +57,8 @@ const useGameStore = createWithEqualityFn((set) => ({
     setGameStatus: (gameStatus) => set({ gameStatus }),
     gameWinner: null, // userId of winner
     setGameWinner: (gameWinner) => set({ gameWinner }),
+    disabledResources: { player1: [], player2: [] }, // Indices by player
+    setDisabledResources: (disabledResources) => set({ disabledResources }),
 }))
 
 export default useGameStore

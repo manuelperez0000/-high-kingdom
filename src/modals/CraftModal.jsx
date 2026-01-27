@@ -2,8 +2,10 @@
 import React from 'react';
 import spriteController from '../sprites/spriteController';
 import gameConfig from '../store/config.json';
+import useSound from '../hooks/useSound';
 
 const CraftModal = ({ isOpen, onClose, onCraft }) => {
+  const playSound = useSound();
   if (!isOpen) return null;
 
   const crafts = Object.entries(gameConfig.crafting).map(([id, data]) => ({
@@ -15,14 +17,29 @@ const CraftModal = ({ isOpen, onClose, onCraft }) => {
     <div className="modal-bg medieval-modal-bg">
       <div className="medieval-modal">
         <div className="medieval-header">
-          <span className="medieval-close" onClick={onClose}>&times;</span>
+          <span 
+            className="medieval-close" 
+            onClick={() => {
+              playSound('click.mp3');
+              onClose();
+            }}
+            onMouseEnter={() => playSound('hover.mp3')}
+          >&times;</span>
           <h3 className="medieval-title">Artesanía</h3>
         </div>
         
         <div className="medieval-body">
           <div className="character-grid">
             {crafts.map(craft => (
-              <div key={craft.id} className="character-card" onClick={() => onCraft(craft)}>
+              <div 
+                key={craft.id} 
+                className="character-card" 
+                onClick={() => {
+                  playSound('click.mp3');
+                  onCraft(craft);
+                }}
+                onMouseEnter={() => playSound('hover.mp3')}
+              >
                 <div className="character-image-container">
                   <img src={spriteController[craft.sprite]} alt={craft.name} className="character-portrait" />
                 </div>

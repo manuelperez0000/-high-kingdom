@@ -2,7 +2,10 @@ import { useState } from 'react';
 import crafteos from '../assets/crafteos.json';
 import terrain1 from '../assets/terrain1.json';
 import { GiWoodStick, GiStoneBlock, GiMetalBar, GiCottonFlower, GiArrowDunk, GiAxeInStump, GiCrossbow, GiHammerBreak, GiPickOfDestiny, GiSewingNeedle, GiSpellBook, GiRam, GiStoneWall, GiBowman, GiFarmer, GiWizardFace } from 'react-icons/gi';
+import useSound from './useSound';
+
 export const useTerrain = () => {
+  const playSound = useSound();
   const [showModal, setShowModal] = useState(false);
   const [showMaterialModal, setShowMaterialModal] = useState(false);
   const [showCharacterModal, setShowCharacterModal] = useState(false);
@@ -169,9 +172,10 @@ export const useTerrain = () => {
       if (content) {
         if (['madera', 'hierro', 'piedra', 'algodon', 'hilo', 'palo', 'runa'].includes(content)) {
           if (isObreroNearby(i)) {
+            playSound('collect.mp3');
             setPlayerInventory(prev => ({ ...prev, [content]: prev[content] + 1 }));
           } else {
-            alert('Necesita poner un obrero cerca para minar este material');
+            playSound('error.mp3');
           }
         } else if (!['muro_de_piedra'].includes(content)) {
           if (content === 'obrero') {

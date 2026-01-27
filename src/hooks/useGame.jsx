@@ -6,22 +6,23 @@ import { auth, db } from "../firebase";
 import { doc, updateDoc, onSnapshot } from "firebase/firestore";
 import terrain from '../assets/terrain1.json'
 import gameConfig from '../store/config.json'
+import useSound from "./useSound";
 
 const useGame = (onCharacterPlaced) => {
-
+    const playSound = useSound();
     const { gameId } = useParams();
-    const { 
-        phase, 
-        boardState, 
-        setBoardState, 
-        isPlayerTurn, 
+    const {
+        phase,
+        boardState,
+        setBoardState,
+        isPlayerTurn,
         setIsPlayerTurn,
-        setPhase, 
+        setPhase,
         currentPlayer,
-        setCurrentPlayer, 
+        setCurrentPlayer,
         playerIndex,
         setPlayerIndex,
-        localSelectedCharacter, 
+        localSelectedCharacter,
         setLocalSelectedCharacter,
         inventories,
         setInventories,
@@ -54,7 +55,9 @@ const useGame = (onCharacterPlaced) => {
         selectedFrom,
         setSelectedFrom,
         attackMode,
-        setAttackMode
+        setAttackMode,
+        disabledResources,
+        setDisabledResources
     } = useGameStore();
     const [user, setUser] = useState(null);
 
@@ -72,11 +75,11 @@ const useGame = (onCharacterPlaced) => {
                     setBoardState(gameData.boardState || terrain.boardState);
                     setPhase(gameData.phase || 1);
                     setLocalSelectedCharacter(gameData.localSelectedCharacter || null);
-                    
+
                     if (gameData.inventories) {
                         setInventories(gameData.inventories);
                     }
-                    
+
                     if (gameData.castleHealth) {
                         setCastleHealth(gameData.castleHealth);
                     }
@@ -92,7 +95,13 @@ const useGame = (onCharacterPlaced) => {
                     if (gameData.winner) {
                         setGameWinner(gameData.winner);
                     }
-                    
+
+                    if (gameData.disabledResources) {
+                        setDisabledResources(gameData.disabledResources);
+                    } else {
+                        setDisabledResources({ player1: [], player2: [] });
+                    }
+
                     const newPhase = gameData.phase || 1;
                     const activePlayer = newPhase <= 2 ? 1 : 2;
                     setCurrentPlayer(activePlayer);
@@ -117,12 +126,12 @@ const useGame = (onCharacterPlaced) => {
         const col = index % 18;
         const directions = [
             [-1, -1], [-1, 0], [-1, 1],
-            [0, -1],           [0, 1],
-            [1, -1],  [1, 0], [1, 1]
+            [0, -1], [0, 1],
+            [1, -1], [1, 0], [1, 1]
         ];
-        
+
         const obreroType = `p${playerIndex}_obrero`;
-        
+
         for (let [dr, dc] of directions) {
             const nr = row + dr;
             const nc = col + dc;
@@ -167,17 +176,26 @@ const useGame = (onCharacterPlaced) => {
         return true;
     };
 
-    const nextPhase = async ({ gameId, newBoardState, newInventories, newCastleHealth, newWallHealths }) => {
+    const nextPhase = async ({ gameId, newBoardState, newInventories, newCastleHealth, newWallHealths, newDisabledResources }) => {
         if (gameId) {
             try {
                 const gameRef = doc(db, 'games', gameId);
                 const newPhase = phase + 1 <= 4 ? phase + 1 : 1;
-                
+
                 const updateData = {
                     phase: newPhase,
                     localSelectedCharacter: null,
                 };
-                
+
+                // Reset disabled resources when it's the start of a player's full turn
+                let currentDisabledResources = newDisabledResources || disabledResources;
+                if (newPhase === 1) {
+                    currentDisabledResources = { ...currentDisabledResources, player1: [] };
+                } else if (newPhase === 3) {
+                    currentDisabledResources = { ...currentDisabledResources, player2: [] };
+                }
+                updateData.disabledResources = currentDisabledResources;
+
                 if (newBoardState) {
                     updateData.boardState = newBoardState;
                 }
@@ -190,7 +208,7 @@ const useGame = (onCharacterPlaced) => {
                 if (newWallHealths) {
                     updateData.wallHealths = newWallHealths;
                 }
-                
+
                 await updateDoc(gameRef, updateData);
             } catch (error) {
                 console.error('Error updating game state:', error);
@@ -200,13 +218,13 @@ const useGame = (onCharacterPlaced) => {
 
     const handleCharacterPlaced = async (index) => {
         if (!localSelectedCharacter) return;
-        
+
         const cost = gameConfig.summonCosts[localSelectedCharacter];
         const playerKey = playerIndex === 1 ? 'player1' : 'player2';
-        
+
         // Use a deep copy of the current inventories state
         const newInventories = JSON.parse(JSON.stringify(inventories));
-        
+
         if (!newInventories[playerKey]) {
             newInventories[playerKey] = { madera: 0, piedra: 0, hierro: 0, algodon: 0 };
         }
@@ -219,18 +237,18 @@ const useGame = (onCharacterPlaced) => {
 
         const newBoardState = [...boardState];
         newBoardState[index] = `p${playerIndex}_${localSelectedCharacter}`;
-        
+
         setLocalSelectedCharacter(null);
         await nextPhase({ gameId, newBoardState, newInventories });
-        
+
         if (onCharacterPlaced) {
             onCharacterPlaced();
         }
     };
 
     const handleBoardCellClick = async (i) => {
-        if (!isPlayerTurn || !user) {
-            alert('No es tu turno');
+        if (!isPlayerTurn || !user || gameStatus === 'finished') {
+            playSound('error.mp3');
             return;
         }
 
@@ -241,22 +259,22 @@ const useGame = (onCharacterPlaced) => {
                 return;
             }
             if (!isWithinOneCell(craftingMode.workerIndex, i)) {
-                alert('Solo puedes construir a una casilla de distancia');
+                playSound('error.mp3');
                 return;
             }
             if (boardState[i] !== null) {
-                alert('La casilla ya está ocupada');
+                playSound('error.mp3');
                 return;
             }
 
             const newBoardState = [...boardState];
             newBoardState[i] = craftingMode.type; // e.g., 'muro_piedra'
-            
+
             // Deduct materials for the wall
             const craftData = gameConfig.crafting[craftingMode.type];
             const newInventories = JSON.parse(JSON.stringify(inventories));
             const playerKey = playerIndex === 1 ? 'player1' : 'player2';
-            
+
             if (craftData && craftData.cost) {
                 for (const [res, amount] of Object.entries(craftData.cost)) {
                     newInventories[playerKey][res] = (newInventories[playerKey][res] || 0) - amount;
@@ -268,7 +286,7 @@ const useGame = (onCharacterPlaced) => {
             if (craftingMode.type === 'muro_piedra') {
                 newWallHealths[i] = gameConfig.wall.initialHealth;
             }
-            
+
             setCraftingMode(null);
             await nextPhase({ gameId, newBoardState, newWallHealths, newInventories });
             return;
@@ -287,12 +305,12 @@ const useGame = (onCharacterPlaced) => {
             const distance = Math.max(Math.abs(r1 - r2), Math.abs(c1 - c2));
 
             if (distance > 3) {
-                alert('El objetivo está fuera de rango (máximo 3 casillas)');
+                playSound('error.mp3');
                 return;
             }
 
             if (!hasLineOfSight(attackMode.attackerIndex, i)) {
-                alert('Hay un muro de piedra bloqueando tu visión');
+                playSound('error.mp3');
                 return;
             }
 
@@ -308,6 +326,7 @@ const useGame = (onCharacterPlaced) => {
 
                     if (newHealth <= 0) {
                         const newCastleHealth = { ...castleHealth, [enemyKey]: 0 };
+                        playSound('sword.mp3');
                         const gameRef = doc(db, 'games', gameId);
                         await updateDoc(gameRef, {
                             castleHealth: newCastleHealth,
@@ -317,6 +336,7 @@ const useGame = (onCharacterPlaced) => {
                         alert('¡Has destruido el castillo enemigo y ganado la partida!');
                     } else {
                         const newCastleHealth = { ...castleHealth, [enemyKey]: newHealth };
+                        playSound('sword.mp3');
                         alert(`¡Flecha en el blanco! Al castillo enemigo le quedan ${newHealth} vidas.`);
                         setAttackMode(null);
                         await nextPhase({ gameId, newCastleHealth });
@@ -324,7 +344,7 @@ const useGame = (onCharacterPlaced) => {
                     return;
                 }
             }
-            
+
             if (target === 'muro_piedra') {
                 const currentHealth = wallHealths[i] ?? gameConfig.wall.initialHealth;
                 const damage = gameConfig.wall.damageReceived.arquero;
@@ -335,10 +355,12 @@ const useGame = (onCharacterPlaced) => {
                 if (newHealth <= 0) {
                     delete newWallHealths[i];
                     newBoardState[i] = null;
-                    alert('¡Muro destruido!');
+                    playSound('stone.mp3');
+                    //alert('¡Muro destruido!');
                 } else {
                     newWallHealths[i] = newHealth;
-                    alert(`¡Ataque al muro! Vida restante: ${newHealth}`);
+                    playSound('stone.mp3');
+                    //alert(`¡Ataque al muro! Vida restante: ${newHealth}`);
                 }
 
                 setAttackMode(null);
@@ -347,14 +369,15 @@ const useGame = (onCharacterPlaced) => {
             }
 
             if (!target || !target.startsWith('p') || target.startsWith(`p${playerIndex}_`)) {
-                alert('Debes seleccionar un personaje enemigo o un muro');
+                playSound('error.mp3');
                 return;
             }
 
             // Execute attack (kill target)
             const newBoardState = [...boardState];
             newBoardState[i] = null;
-            
+            playSound('sword.mp3');
+
             setAttackMode(null);
             await nextPhase({ gameId, newBoardState });
             return;
@@ -375,7 +398,7 @@ const useGame = (onCharacterPlaced) => {
             const distance = Math.max(Math.abs(r1 - r2), Math.abs(c1 - c2));
 
             if (!isStraightLine || distance > 4) {
-                alert('El hechizo solo alcanza hasta 4 casillas en línea recta');
+                playSound('error.mp3');
                 return;
             }
 
@@ -391,6 +414,7 @@ const useGame = (onCharacterPlaced) => {
 
                     if (newHealth <= 0) {
                         const newCastleHealth = { ...castleHealth, [enemyKey]: 0 };
+                        playSound('sword.mp3');
                         const gameRef = doc(db, 'games', gameId);
                         await updateDoc(gameRef, {
                             castleHealth: newCastleHealth,
@@ -400,6 +424,7 @@ const useGame = (onCharacterPlaced) => {
                         alert('¡Has destruido el castillo enemigo con tu magia y ganado la partida!');
                     } else {
                         const newCastleHealth = { ...castleHealth, [enemyKey]: newHealth };
+                        playSound('sword.mp3');
                         alert(`¡Hechizo impactado! Al castillo enemigo le quedan ${newHealth} vidas.`);
                         setAttackMode(null);
                         await nextPhase({ gameId, newCastleHealth });
@@ -418,10 +443,12 @@ const useGame = (onCharacterPlaced) => {
                 if (newHealth <= 0) {
                     delete newWallHealths[i];
                     newBoardState[i] = null;
-                    alert('¡Muro destruido por el hechizo!');
+                    playSound("stone.mp3")
+                    //alert('¡Muro destruido por el hechizo!');
                 } else {
                     newWallHealths[i] = newHealth;
-                    alert(`¡Hechizo al muro! Vida restante: ${newHealth}`);
+                    playSound("stone.mp3")
+                    //alert(`¡Hechizo al muro! Vida restante: ${newHealth}`);
                 }
 
                 setAttackMode(null);
@@ -430,14 +457,15 @@ const useGame = (onCharacterPlaced) => {
             }
 
             if (!target || !target.startsWith('p') || target.startsWith(`p${playerIndex}_`)) {
-                alert('Debes seleccionar un personaje enemigo o un muro');
+                playSound('error.mp3');
                 return;
             }
 
             // Execute attack (kill target) - Mago ignores walls
             const newBoardState = [...boardState];
             newBoardState[i] = null;
-            
+            playSound('sword.mp3');
+
             setAttackMode(null);
             await nextPhase({ gameId, newBoardState });
             return;
@@ -450,7 +478,7 @@ const useGame = (onCharacterPlaced) => {
                 return;
             }
             if (!isWithinOneCell(attackMode.attackerIndex, i)) {
-                alert('Los obreros solo pueden atacar a una casilla de distancia');
+                playSound('error.mp3');
                 return;
             }
 
@@ -466,6 +494,7 @@ const useGame = (onCharacterPlaced) => {
 
                     if (newHealth <= 0) {
                         const newCastleHealth = { ...castleHealth, [enemyKey]: 0 };
+                        playSound('sword.mp3');
                         const gameRef = doc(db, 'games', gameId);
                         await updateDoc(gameRef, {
                             castleHealth: newCastleHealth,
@@ -475,6 +504,7 @@ const useGame = (onCharacterPlaced) => {
                         alert('¡El obrero ha demolido el castillo enemigo! ¡Has ganado!');
                     } else {
                         const newCastleHealth = { ...castleHealth, [enemyKey]: newHealth };
+                        playSound('sword.mp3');
                         alert(`¡Gran golpe! Al castillo enemigo le quedan ${newHealth} vidas.`);
                         setAttackMode(null);
                         await nextPhase({ gameId, newCastleHealth });
@@ -482,7 +512,7 @@ const useGame = (onCharacterPlaced) => {
                     return;
                 }
             }
-            
+
             if (target === 'muro_piedra') {
                 const currentHealth = wallHealths[i] ?? gameConfig.wall.initialHealth;
                 const damage = gameConfig.wall.damageReceived.obrero;
@@ -493,10 +523,11 @@ const useGame = (onCharacterPlaced) => {
                 if (newHealth <= 0) {
                     delete newWallHealths[i];
                     newBoardState[i] = null;
-                    alert('¡Muro demolido!');
+                    playSound('stone.mp3');
                 } else {
                     newWallHealths[i] = newHealth;
-                    alert(`¡Obrero picando el muro! Vida restante: ${newHealth}`);
+                    playSound('stone.mp3');
+                    //alert(`¡Obrero picando el muro! Vida restante: ${newHealth}`);
                 }
 
                 setAttackMode(null);
@@ -505,14 +536,15 @@ const useGame = (onCharacterPlaced) => {
             }
 
             if (!target || !target.startsWith('p') || target.startsWith(`p${playerIndex}_`)) {
-                alert('Debes seleccionar un personaje enemigo o un muro');
+                playSound('error.mp3');
                 return;
             }
 
             // Execute attack on character
             const newBoardState = [...boardState];
             newBoardState[i] = null;
-            
+            playSound('sword.mp3');
+
             setAttackMode(null);
             await nextPhase({ gameId, newBoardState });
             return;
@@ -522,16 +554,16 @@ const useGame = (onCharacterPlaced) => {
             // Summoning logic
             const col = i % 18;
             if (playerIndex === 1 && col > 8) {
-                alert('Solo puedes invocar en tu territorio (rojo)');
+                playSound('error.mp3');
                 return;
             }
             if (playerIndex === 2 && col < 9) {
-                alert('Solo puedes invocar en tu territorio (azul)');
+                playSound('error.mp3');
                 return;
             }
 
             if (boardState[i] !== null) {
-                alert('La casilla ya está ocupada');
+                playSound('error.mp3');
                 return;
             }
 
@@ -539,7 +571,7 @@ const useGame = (onCharacterPlaced) => {
         } else {
             // Move or Attack logic
             const content = boardState[i];
-            
+
             if (selectedFrom !== null) {
                 // We have a character selected, now we click a target cell
                 if (i === selectedFrom) {
@@ -549,7 +581,7 @@ const useGame = (onCharacterPlaced) => {
 
                 // Restriction: only move 1 cell distance
                 if (!isWithinOneCell(selectedFrom, i)) {
-                    alert('Solo puedes moverte a una casilla de distancia');
+                    playSound('error.mp3');
                     setSelectedFrom(null);
                     return;
                 }
@@ -557,12 +589,12 @@ const useGame = (onCharacterPlaced) => {
                 // Check if target is enemy castle
                 const target = boardState[i];
                 const enemyCastle = playerIndex === 1 ? 'castillo_jugador2' : 'castillo_jugador1';
-                
+
                 if (target === enemyCastle) {
                     if (window.confirm('¿Quieres atacar el castillo enemigo?')) {
                         const attacker = boardState[selectedFrom];
                         let damage = gameConfig.castle.damageReceived.default;
-                        
+
                         if (attacker) {
                             if (attacker.endsWith('_obrero')) damage = gameConfig.castle.damageReceived.obrero;
                             else if (attacker.endsWith('_arquero')) damage = gameConfig.castle.damageReceived.arquero;
@@ -577,9 +609,10 @@ const useGame = (onCharacterPlaced) => {
                             const newBoardState = [...boardState];
                             newBoardState[i] = boardState[selectedFrom];
                             newBoardState[selectedFrom] = null;
-                            
+
                             const newCastleHealth = { ...castleHealth, [enemyKey]: 0 };
-                            
+                            playSound('sword.mp3');
+
                             const gameRef = doc(db, 'games', gameId);
                             await updateDoc(gameRef, {
                                 boardState: newBoardState,
@@ -590,6 +623,7 @@ const useGame = (onCharacterPlaced) => {
                             alert('¡Has destruido el castillo enemigo y ganado la partida!');
                         } else {
                             const newCastleHealth = { ...castleHealth, [enemyKey]: newHealth };
+                            playSound('sword.mp3');
                             alert(`¡Ataque exitoso! Al castillo enemigo le quedan ${newHealth} vidas.`);
                             await nextPhase({ gameId, newCastleHealth });
                         }
@@ -606,13 +640,13 @@ const useGame = (onCharacterPlaced) => {
                     setSelectedFrom(null);
                     await nextPhase({ gameId, newBoardState });
                 } else {
-                    alert('Casilla ocupada o acción no permitida');
+                    playSound('error.mp3');
                     setSelectedFrom(null);
                 }
             } else {
                 // Select a character to move or act
                 const isOwnCharacter = content && content.startsWith(`p${playerIndex}_`);
-                
+
                 if (isOwnCharacter) {
                     if (content.endsWith('_obrero')) {
                         setSelectedObreroIndex(i);
@@ -628,20 +662,35 @@ const useGame = (onCharacterPlaced) => {
                     }
                 } else if (content && ['madera', 'piedra', 'hierro', 'algodon'].includes(content)) {
                     // Collect resource logic
+                    const isResourceDisabled = (disabledResources?.player1 || []).includes(i) || (disabledResources?.player2 || []).includes(i);
+                    
+                    if (isResourceDisabled) {
+                        playSound('error.mp3');
+                        return;
+                    }
+
                     if (isObreroNearby(i)) {
-                        if (window.confirm(`¿Recolectar ${content}?`)) {
-                            // Update inventories
-                            const newInventories = JSON.parse(JSON.stringify(inventories));
-                            const playerKey = playerIndex === 1 ? 'player1' : 'player2';
-                            newInventories[playerKey][content] = (newInventories[playerKey][content] || 0) + 1;
-                            
-                            await nextPhase({ gameId, newInventories });
-                        }
+                        // Update inventories
+                        const newInventories = JSON.parse(JSON.stringify(inventories));
+                        const playerKey = playerIndex === 1 ? 'player1' : 'player2';
+                        
+                        // Get collection amount from config
+                        const amount = gameConfig.collectionAmounts[content] || 1;
+                        newInventories[playerKey][content] = (newInventories[playerKey][content] || 0) + amount;
+
+                        // Disable resource for the player
+                        const newDisabledResources = { ...disabledResources };
+                        const listKey = playerIndex === 1 ? 'player1' : 'player2';
+                        newDisabledResources[listKey] = [...(newDisabledResources[listKey] || []), i];
+
+                        playSound('collect.mp3');
+                        await nextPhase({ gameId, newInventories, newDisabledResources });
+
                     } else {
-                        alert('Necesitas un obrero cerca para recolectar este material');
+                        playSound('error.mp3');
                     }
                 } else if (content && content.startsWith('p') && !content.startsWith(`p${playerIndex}_`)) {
-                    alert('No puedes mover los personajes del oponente');
+                    playSound('error.mp3');
                 }
             }
         }
@@ -680,10 +729,10 @@ const useGame = (onCharacterPlaced) => {
         // Check resources
         const playerKey = playerIndex === 1 ? 'player1' : 'player2';
         const playerInv = inventories[playerKey];
-        
+
         for (const [res, amount] of Object.entries(craft.cost)) {
             if ((playerInv[res] || 0) < amount) {
-                alert(`No tienes suficiente ${res}. Necesitas ${amount}.`);
+                playSound('error.mp3');
                 return;
             }
         }
@@ -772,31 +821,38 @@ const useGame = (onCharacterPlaced) => {
             }
         }
 
+        // Highlight disabled resources
+        const isResourceDisabled = (disabledResources?.player1 || []).includes(i) || (disabledResources?.player2 || []).includes(i);
+        if (isResourceDisabled) {
+            extraClasses += ' resource-disabled';
+        }
+
         return `cell ${colorCells}${extraClasses}`;
-    }, [craftingMode, boardState, selectedFrom, playerIndex, attackMode]);
+    }, [craftingMode, boardState, selectedFrom, playerIndex, attackMode, disabledResources]);
 
     const getSprite = (i) => {
         if (!boardState[i]) return null;
         let spriteKey = boardState[i];
-        
+
         // If it's a character with ownership prefix
         if (spriteKey.startsWith('p1_')) {
             spriteKey = spriteKey.substring(3); // e.g. "obrero"
         } else if (spriteKey.startsWith('p2_')) {
             spriteKey = spriteKey.substring(3) + '2'; // e.g. "obrero2"
         }
-        
+
         const health = wallHealths[i];
         const isWall = boardState[i] === 'muro_piedra';
         const showWallHealth = isWall && health !== undefined && health < 10;
+        const isResourceDisabled = (disabledResources?.player1 || []).includes(i) || (disabledResources?.player2 || []).includes(i);
 
         return (
-            <div className="sprite-container" style={{ position: 'relative', width: '100%', height: '100%' }}>
+            <div className="sprite-container" style={{ position: 'relative', width: '100%', height: '100%', opacity: isResourceDisabled ? 0.4 : 1 }}>
                 <img className='boardTexture' src={spriteController[spriteKey]} alt={spriteKey} />
                 {showWallHealth && (
                     <div className="wall-health-bar-container">
-                        <div 
-                            className="wall-health-bar-fill" 
+                        <div
+                            className="wall-health-bar-fill"
                             style={{ width: `${(health / gameConfig.wall.initialHealth) * 100}%` }}
                         />
                     </div>
@@ -809,11 +865,11 @@ const useGame = (onCharacterPlaced) => {
         const inventory = inventories[playerIndex === 1 ? 'player1' : 'player2'];
         const cost = gameConfig.summonCosts[character];
 
-        if (inventory.madera < cost.madera || 
-            inventory.piedra < cost.piedra || 
-            inventory.hierro < cost.hierro || 
+        if (inventory.madera < cost.madera ||
+            inventory.piedra < cost.piedra ||
+            inventory.hierro < cost.hierro ||
             inventory.algodon < cost.algodon) {
-            alert('No tienes suficientes recursos para invocar a este personaje');
+            playSound('error.mp3');
             return;
         }
 
@@ -827,6 +883,7 @@ const useGame = (onCharacterPlaced) => {
         nextPhase,
         isPlayerTurn,
         handleBoardCellClick,
+        isObreroNearby,
         showCharacterModal,
         setShowCharacterModal,
         showActionModal,
@@ -850,7 +907,8 @@ const useGame = (onCharacterPlaced) => {
         attackMode,
         gameStatus,
         gameWinner,
-        user
+        user,
+        disabledResources
     }
 }
 export default useGame;

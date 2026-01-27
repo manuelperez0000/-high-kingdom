@@ -10,11 +10,11 @@
     }
   },
   "wall": {
-    "initialHealth": 20,
+    "initialHealth": 8,
     "damageReceived": {
       "arquero": 3,
       "mago": 4,
-      "obrero": 1
+      "obrero": 2
     }
   },
   "crafting": {
@@ -25,8 +25,14 @@
     }
   },
   "summonCosts": {
-    "obrero": { "madera": 2, "piedra": 0, "hierro": 0, "algodon": 0 },
-    "arquero": { "madera": 3, "piedra": 1, "hierro": 0, "algodon": 1 },
-    "mago": { "madera": 1, "piedra": 2, "hierro": 2, "algodon": 0 }
+    "obrero": { "madera": 2, "piedra": 1, "hierro": 0, "algodon": 0 },
+    "arquero": { "madera": 3, "piedra": 0, "hierro": 0, "algodon": 2 },
+    "mago": { "madera": 0, "piedra": 2, "hierro": 2, "algodon": 2 }
+  },
+  "collectionAmounts": {
+    "piedra": 4,
+    "madera": 4,
+    "algodon": 2,
+    "hierro": 1
   }
 }

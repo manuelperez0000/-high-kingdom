@@ -5,7 +5,9 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { collection, addDoc, query, orderBy, doc, updateDoc, arrayUnion, onSnapshot } from 'firebase/firestore';
 import terrain from '../assets/terrain1.json'
 import gameConfig from '../store/config.json'
+import useSound from '../hooks/useSound';
 const Lobby = () => {
+  const playSound = useSound();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [games, setGames] = useState([]);
@@ -48,6 +50,7 @@ const Lobby = () => {
 
   const handleCreateGame = async () => {
     if (!user) return;
+    playSound('click2.mp3');
 
     try {
       const playerData = {
@@ -146,7 +149,7 @@ const Lobby = () => {
         <div className="lobby-right">
           <div className="game-room">
             <h2>Sala de Partidas</h2>
-            <button className="create-game-btn" onClick={handleCreateGame}>
+            <button onMouseEnter={() => playSound('hover.mp3')} className="create-game-btn" onClick={handleCreateGame}>
               Crear Nueva Partida
             </button>
 
@@ -165,12 +168,15 @@ const Lobby = () => {
                           <p><strong>Correo:</strong> {creatorData?.email || 'N/A'}</p>
                           <p><strong>Estado:</strong> {
                             game.status === 'waiting' ? 'Esperando jugadores' :
-                            'En juego'
+                              'En juego'
                           }</p>
                         </div>
                         <button
                           className="join-game-btn"
-                          onClick={() => handleJoinGame(game.id)}
+                          onClick={() => {
+                            playSound('click2.mp3');
+                            handleJoinGame(game.id);
+                          }}
                           disabled={game.status !== 'waiting'}
                         >
                           {game.status === 'waiting'

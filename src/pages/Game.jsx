@@ -8,9 +8,11 @@ import ArqueroActionModal from '../modals/ArqueroActionModal';
 import MagoActionModal from '../modals/MagoActionModal';
 import GameOverModal from '../modals/GameOverModal';
 import useGame from '../hooks/useGame';
-import CastleHealthBar from '../components/gameComponents/CastleHealthBar';
+import { useEffect, useRef, useState } from 'react';
 
 const Game = () => {
+  const audioRef = useRef(null);
+  const [volume, setVolume] = useState(0.5);
   const {
     showCharacterModal,
     setShowCharacterModal,
@@ -33,13 +35,52 @@ const Game = () => {
     user
   } = useGame();
 
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
+
+  useEffect(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio('/soundEffects/musica.mp3');
+      audioRef.current.loop = true;
+      audioRef.current.volume = volume;
+    }
+    
+    const playAttempt = audioRef.current.play();
+    
+    if (playAttempt !== undefined) {
+      playAttempt.catch(error => {
+        console.log("Auto-play was prevented. Music will start after user interaction.", error);
+        // Intentar reproducir de nuevo al primer clic del usuario
+        const playOnInteraction = () => {
+          audioRef.current.play();
+          document.removeEventListener('click', playOnInteraction);
+        };
+        document.addEventListener('click', playOnInteraction);
+      });
+    }
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    };
+  }, []);
+
   return (
     <div className="game">
-      <Sidebar onInvokeCharacter={() => setShowCharacterModal(true)} />
+      <Sidebar 
+        onInvokeCharacter={() => setShowCharacterModal(true)} 
+        volume={volume}
+        setVolume={setVolume}
+      />
       <div className="game-right">
-        <GameBoard/>
+        <GameBoard />
       </div>
-      
+
       {gameStatus === 'finished' && (
         <GameOverModal isWinner={gameWinner === user?.uid} />
       )}

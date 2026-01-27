@@ -2,11 +2,12 @@
 /* import PropTypes from 'prop-types'; */
 import Inventory from "./Inventory"
 import useSidebar from '../../hooks/useSidebar';
-import { FaUserPlus } from 'react-icons/fa';
+import { FaUserPlus, FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
 import useGameStore from '../../store/useGameStore';
+import useSound from '../../hooks/useSound';
 
-const Sidebar = ({ onInvokeCharacter }) => {
-
+const Sidebar = ({ onInvokeCharacter, volume, setVolume }) => {
+    const playSound = useSound();
     const {
         user,
         phase,
@@ -52,7 +53,11 @@ const Sidebar = ({ onInvokeCharacter }) => {
 
                 <button
                     className="invoke-character-button"
-                    onClick={onInvokeCharacter}
+                    onClick={() => {
+                        playSound('click.mp3');
+                        onInvokeCharacter();
+                    }}
+                    onMouseEnter={() => playSound('hover.mp3')}
                     disabled={!isPlayerTurn}
                 >
                     <FaUserPlus />
@@ -61,10 +66,30 @@ const Sidebar = ({ onInvokeCharacter }) => {
 
                 {opponent && <button
                     className="surrender-button"
-                    onClick={handleSurrender}
+                    onClick={() => {
+                        playSound('click.mp3');
+                        handleSurrender();
+                    }}
+                    onMouseEnter={() => playSound('hover.mp3')}
                 >
                     Rendirse
                 </button>}
+
+                <div className="volume-control-container">
+                    <div className="volume-icon">
+                        {volume > 0 ? <FaVolumeUp /> : <FaVolumeMute />}
+                    </div>
+                    <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value={volume}
+                        onChange={(e) => setVolume(parseFloat(e.target.value))}
+                        className="medieval-volume-slider"
+                    />
+                    <span className="volume-percentage">{Math.round(volume * 100)}%</span>
+                </div>
             </div>
         </div>
     )

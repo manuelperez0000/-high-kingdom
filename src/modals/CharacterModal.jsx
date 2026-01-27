@@ -1,8 +1,10 @@
 /* eslint-disable react/prop-types */
 import spriteController from '../sprites/spriteController';
 import gameConfig from '../store/config.json';
+import useSound from '../hooks/useSound';
 
 const CharacterModal = ({ isOpen, onClose, handleInvokeCharacter, playerIndex }) => {
+  const playSound = useSound();
   if (!isOpen) return null;
 
   const characters = [
@@ -15,7 +17,14 @@ const CharacterModal = ({ isOpen, onClose, handleInvokeCharacter, playerIndex })
     <div className="modal-bg medieval-modal-bg">
       <div className="medieval-modal">
         <div className="medieval-header">
-          <span className="medieval-close" onClick={onClose}>&times;</span>
+          <span 
+            className="medieval-close" 
+            onClick={() => {
+              playSound('click.mp3');
+              onClose();
+            }}
+            onMouseEnter={() => playSound('hover.mp3')}
+          >&times;</span>
           <h3 className="medieval-title">Reclutar Tropas</h3>
         </div>
         
@@ -24,7 +33,15 @@ const CharacterModal = ({ isOpen, onClose, handleInvokeCharacter, playerIndex })
             {characters.map(char => {
               const spriteKey = playerIndex === 2 ? `${char.id}2` : char.id;
               return (
-                <div key={char.id} className="character-card" onClick={() => handleInvokeCharacter(char.id)}>
+                <div 
+                  key={char.id} 
+                  className="character-card" 
+                  onClick={() => {
+                    playSound('click.mp3');
+                    handleInvokeCharacter(char.id);
+                  }}
+                  onMouseEnter={() => playSound('hover.mp3')}
+                >
                   <div className="character-image-container">
                     <img src={spriteController[spriteKey]} alt={char.name} className="character-portrait" />
                   </div>

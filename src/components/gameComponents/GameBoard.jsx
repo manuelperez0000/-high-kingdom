@@ -2,9 +2,10 @@
 import { useState } from 'react';
 import useGame from '../../hooks/useGame';
 import spriteController from '../../sprites/spriteController';
+import useSound from '../../hooks/useSound';
 
 const GameBoard = () => {
-
+    const playSound = useSound();
     const [hoveredCell, setHoveredCell] = useState(null);
 
     const { getClassNames,
@@ -12,8 +13,14 @@ const GameBoard = () => {
         handleBoardCellClick, boardState,
         localSelectedCharacter,
         selectedFrom,
-        craftingMode
+        craftingMode,
+        isObreroNearby,
+        disabledResources
     } = useGame();
+
+    const handleCellClick = (i) => {
+        handleBoardCellClick(i);
+    };
 
     const getSpriteOrCharacter = (i) => {
         if (localSelectedCharacter && hoveredCell === i && boardState[i] === null) {
@@ -45,8 +52,11 @@ const GameBoard = () => {
                     <div
                         key={i}
                         className={`${getClassNames(i)} ${!isPlayerTurn && !localSelectedCharacter ? 'disabled' : ''} ${selectedFrom === i ? 'selected' : ''}`}
-                        onClick={() => handleBoardCellClick(i)}
-                        onMouseEnter={() => setHoveredCell(i)}
+                        onClick={() => handleCellClick(i)}
+                        onMouseEnter={() => {
+                            playSound('hover.mp3');
+                            setHoveredCell(i);
+                        }}
                         onMouseLeave={() => setHoveredCell(null)}>
                         {getSpriteOrCharacter(i)}
                     </div>
