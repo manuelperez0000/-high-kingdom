@@ -25,7 +25,7 @@
     }
   },
   "summonCosts": {
-    "obrero": { "madera": 2, "piedra": 1, "hierro": 0, "algodon": 0 },
+    "obrero": { "madera": 2, "piedra": 0, "hierro": 0, "algodon": 0 },
     "arquero": { "madera": 3, "piedra": 0, "hierro": 0, "algodon": 2 },
     "mago": { "madera": 0, "piedra": 2, "hierro": 2, "algodon": 2 }
   },
